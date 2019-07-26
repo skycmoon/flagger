@@ -149,6 +149,7 @@ func (ir *IstioRouter) reconcileVirtualService(canary *flaggerv1.Canary) error {
 				Retries:       canary.Spec.Service.Retries,
 				CorsPolicy:    canary.Spec.Service.CorsPolicy,
 				AppendHeaders: addHeaders(canary),
+				Mirror: 	   makeMirroredDestination(canary, canaryName),
 				Route:         canaryRoute,
 			},
 		},
@@ -386,6 +387,21 @@ func makeDestination(canary *flaggerv1.Canary, host string, weight int) istiov1a
 	// if port discovery is enabled then we need to explicitly set the destination port
 	if canary.Spec.Service.PortDiscovery {
 		dest.Destination.Port = &istiov1alpha3.PortSelector{
+			Number: uint32(canary.Spec.Service.Port),
+		}
+	}
+
+	return dest
+}
+
+func makeMirroredDestination(canary *flaggerv1.Canary, host string) *istiov1alpha3.Destination {
+	dest := &istiov1alpha3.Destination {
+		Host: host,
+	}
+
+	// if port discovery is enabled then we need to explicitly set the destination port
+	if canary.Spec.Service.PortDiscovery {
+		dest.Port = &istiov1alpha3.PortSelector{
 			Number: uint32(canary.Spec.Service.Port),
 		}
 	}
